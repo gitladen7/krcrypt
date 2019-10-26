@@ -20,7 +20,6 @@ const getSignature = async (fileIdentifier: string) => {
 
     console.log(`KRCrypt ▶ Phone approval required for "${fileIdentifier}". Respond using the Krypton app`);
 
-
     const meResponse = await axios({
         method: "GET",
         socketPath: socketPath,
@@ -192,12 +191,12 @@ const printUsage = (errorStr: string = "") => {
             return printUsage(`File "${file}" doesnt exist!`);
         }
 
-        if (process.argv[2] === "decrypt") {
+        if (operation === "decrypt") {
             await decrypt(file);
             console.log(`KRCrypt ▶ File successfully decrypted!`);
         }
 
-        if (process.argv[2] === "encrypt") {
+        if (operation === "encrypt") {
             const key = await getKey(identifier);
             await encrypt(file, key);
             console.log(`KRCrypt ▶ File successfully encrypted!`);
