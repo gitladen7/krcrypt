@@ -71,7 +71,6 @@ const deriveKey = (baseKey: Buffer, content: string, hash: string, size: number)
 interface IKey {
     fileIdentifier: string,
     key: Buffer,
-    iv: Buffer,
 }
 
 const getKey = async (fileIdentifier: string, optionalHashedPassword: string = ""): Promise<IKey> => {
@@ -81,13 +80,13 @@ const getKey = async (fileIdentifier: string, optionalHashedPassword: string = "
     return {
         fileIdentifier,
         key: deriveKey(signatureBuffer, `key:${optionalHashedPassword}`, "sha256", 32),
-        iv: deriveKey(signatureBuffer, `iv:${optionalHashedPassword}`, "sha256", 12),
     }
 }
 
 const encrypt = async (inFile: string, keys: IKey) => {
     return new Promise<void>((resolve) => {
-        const cipher = createCipheriv("id-aes256-GCM", keys.key, keys.iv);
+        const iv = randomBytes(12);
+        const cipher = createCipheriv("id-aes256-GCM", keys.key, iv);
 
         const input = fs.createReadStream(`${inFile}`);
         const output = fs.createWriteStream(`${inFile}.krcrypted`);
@@ -96,6 +95,7 @@ const encrypt = async (inFile: string, keys: IKey) => {
         cipher.on("end", () => {
             const authTag = (cipher as any).getAuthTag();
             const extraData = Buffer.concat([
+                iv,
                 authTag,
                 Buffer.from(keys.fileIdentifier),
                 Buffer.alloc(4),
@@ -119,6 +119,7 @@ const readTagAndIdentifier = async (inFile: string) => {
     const stats = fs.statSync(`${inFile}`);
 
     return new Promise<{
+        iv: Buffer;
         tag: Buffer;
         identifier: string;
         end: number;
@@ -128,14 +129,21 @@ const readTagAndIdentifier = async (inFile: string) => {
             end: stats.size
         });
         stream.on("data", (data: Buffer) => {
-            const identifierLen = data.readUInt32LE(data.length - 4);
-            const identifier = data.slice(data.length - 4 - identifierLen, data.length - 4).toString();
-            const tag = data.slice(data.length - 4 - identifierLen - 16, data.length - 4 - identifierLen);
+            let position = data.length;
+            const identifierLen = data.readUInt32LE(position - 4);
+            position -= 4;
+            const identifier = data.slice(position - identifierLen, position).toString();
+            position -= identifierLen;
+            const tag = data.slice(position - 16, position);
+            position -= 16;
+            const iv = data.slice(position - 12, position);
+            position -= 12;
 
             return resolve({
+                iv,
                 tag,
                 identifier,
-                end: stats.size - 4 - identifierLen - 16 - 1,
+                end: position - 1,
             });
         });
         stream.resume();
@@ -147,7 +155,7 @@ const decrypt = async (inFile: string) => {
     const keys = await getKey(d.identifier);
 
     return new Promise<void>((resolve) => {
-        const decipher = createDecipheriv("id-aes256-GCM", keys.key, keys.iv);
+        const decipher = createDecipheriv("id-aes256-GCM", keys.key, d.iv);
         (decipher as any).setAuthTag(d.tag);
         const input = fs.createReadStream(`${inFile}`, {
             start: 0,
