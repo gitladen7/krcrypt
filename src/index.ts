@@ -153,7 +153,7 @@ const decrypt = async (inFile: string) => {
             start: 0,
             end: d.end,
         });
-        const output = fs.createWriteStream(`${inFile}.krdecrypted`);
+        const output = fs.createWriteStream(inFile.endsWith(".krcrypted") ? inFile.replace(/\.krcrypted$/, "") : `${inFile}.krdecrypted`);
         input.pipe(decipher).pipe(output).on("close", () => {
             resolve();
         });
@@ -173,7 +173,7 @@ const printUsage = (errorStr: string = "") => {
     try {
         const operation = `${process.argv[2]}`;
         const identifier = `${process.argv[3]}`;
-        const file = `${process.argv[4]}`;
+        const file = `${process.argv[4] || process.argv[3]}`;
 
         if (["decrypt", "encrypt"].indexOf(operation) === -1) {
             return printUsage("Invalid operation");
