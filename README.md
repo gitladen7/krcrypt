@@ -19,7 +19,8 @@ to encrypt: `node krcrypt.js encrypt "Bitcoin Wallet" wallet.json`
 to decrypt: `node krcrypt.js decrypt wallet.json.krcrypted`
 
 Both of those command will show a prompt like this on your device:
-![Example Image](./images/wallet.jpeg)
+
+<img src="./images/wallet.jpeg" width="375">
 
 How does it work?
 ===
