@@ -10,6 +10,8 @@ Usage
 ===
 kr daemon needs to be running (`kr restart`) and krd socket should be placed on the default path. (`$HOME/.kr/krd.sock`)
 
+NOTICE: It only works with RSA key type.
+
 - encryption: `node krcrypt.js encrypt [identifier] [file]`
 - decryption: `node krcrypt.js decrypt [file]`
 
