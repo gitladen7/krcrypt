@@ -12,7 +12,7 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^12.11.7",
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "ts-loader": "^6.2.1",
     "ts-node": "^8.4.1",
     "typescript": "^3.6.4",
